@@ -1,0 +1,88 @@
+.tp-banner {
+  padding: 8rem 0 4rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.tp-banner-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, var(--accent, #d92332)10, transparent 70%);
+  z-index: 0;
+}
+
+.tp-banner-content {
+  position: relative;
+  z-index: 1;
+}
+
+.tp-title {
+  margin-top: 1rem;
+  font-size: clamp(2rem, 4vw, 3rem);
+}
+
+.tp-desc {
+  margin-top: 0.75rem;
+  max-width: 600px;
+  font-size: 1rem;
+}
+
+.tp-dates {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: var(--color-text-muted);
+}
+
+/* Nav Grid */
+.tp-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.tp-nav-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.tp-nav-card:hover { color: inherit; }
+
+.tp-nav-icon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(217, 35, 50, 0.1);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.tp-nav-info { flex: 1; }
+.tp-nav-info h3 { font-size: 0.95rem; }
+
+.tp-nav-count {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.tp-nav-arrow {
+  color: var(--color-text-muted);
+  opacity: 0;
+  transform: translateX(-5px);
+  transition: all var(--transition);
+}
+
+.tp-nav-card:hover .tp-nav-arrow {
+  opacity: 1;
+  transform: translateX(0);
+  color: var(--color-accent-primary);
+}

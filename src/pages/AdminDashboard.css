@@ -1,0 +1,13 @@
+.admin-input {
+  width: 100%;
+  padding: 0.75rem;
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: white;
+  border-radius: 4px;
+  font-family: inherit;
+}
+.admin-input:focus {
+  outline: none;
+  border-color: var(--color-accent-primary);
+}

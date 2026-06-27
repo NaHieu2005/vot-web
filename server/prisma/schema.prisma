@@ -1,0 +1,116 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  osuId     Int      @unique
+  username  String
+  avatarUrl String?
+  role      String   @default("PLAYER") // "PLAYER", "STAFF", "ADMIN"
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  stats          PlayerStat[]
+  tournamentStaff TournamentStaff[]
+}
+
+model Tournament {
+  id          Int      @id @default(autoincrement())
+  name        String
+  slug        String   @unique
+  shortName   String?  // e.g. "VOT6"
+  description String?
+  bannerImage String?
+  accentColor String?  @default("#d92332") // Custom accent per tournament
+  status      String   @default("upcoming") // "upcoming", "ongoing", "completed"
+  startDate   String?
+  endDate     String?
+  rankMin     Int?
+  rankMax     Int?
+  rules       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  mappools    Mappool[]
+  schedules   Schedule[]
+  stats       PlayerStat[]
+  staff       TournamentStaff[]
+}
+
+model TournamentStaff {
+  id           Int        @id @default(autoincrement())
+  userId       Int
+  tournamentId Int
+  staffRole    String     // "Host", "Mappooler", "Referee", "Streamer", "Commentator", "GFX"
+  user         User       @relation(fields: [userId], references: [id])
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  createdAt    DateTime   @default(now())
+
+  @@unique([userId, tournamentId, staffRole])
+}
+
+model Mappool {
+  id           Int        @id @default(autoincrement())
+  tournamentId Int
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  stage        String     // "Qualifiers", "RO32", etc.
+  mod          String     // "NM1", "HD1", etc.
+  order        Int        @default(0)
+  beatmapId    Int
+  title        String
+  artist       String
+  mapper       String
+  picker       String?
+  diffName     String
+  sr           Float
+  od           Float
+  hp           Float
+  bpm          Float
+  coverImage   String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model Schedule {
+  id           Int        @id @default(autoincrement())
+  tournamentId Int
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  stage        String
+  date         String
+  status       String     @default("upcoming") // "upcoming", "active", "completed"
+  matchTime    DateTime?
+  player1Id    Int?
+  player2Id    Int?
+  player1Name  String?
+  player2Name  String?
+  score1       Int?
+  score2       Int?
+  refereeId    Int?
+  refereeName  String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+}
+
+model PlayerStat {
+  id           Int        @id @default(autoincrement())
+  userId       Int
+  tournamentId Int
+  user         User       @relation(fields: [userId], references: [id])
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  stage        String
+  score        Int
+  accuracy     Float
+  misses       Int
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([userId, tournamentId, stage])
+}
