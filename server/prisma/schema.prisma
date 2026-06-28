@@ -74,6 +74,7 @@ model Mappool {
   od           Float
   hp           Float
   bpm          Float
+  length       Int        @default(0)
   coverImage   String?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
@@ -91,10 +92,17 @@ model Schedule {
   player2Id    Int?
   player1Name  String?
   player2Name  String?
+  player1Avatar String?
+  player2Avatar String?
   score1       Int?
   score2       Int?
   refereeId    Int?
   refereeName  String?
+  streamer     String?
+  commentators String?
+  rescheduleTime DateTime?
+  rescheduleBy   String?
+  rescheduleStatus String? // "pending", "accepted"
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 }
@@ -113,4 +121,13 @@ model PlayerStat {
   updatedAt    DateTime   @updatedAt
 
   @@unique([userId, tournamentId, stage])
+}
+
+model Notification {
+  id         Int      @id @default(autoincrement())
+  targetUser String   // username
+  message    String
+  link       String?
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
 }

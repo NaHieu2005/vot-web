@@ -37,10 +37,10 @@ const Home = () => {
             </div>
             <h1 className="hero-title">
               Vietnam<br />
-              osu!<span className="accent">taiko</span>
+              Taiko <span className="accent">Championship</span>
             </h1>
             <p className="hero-subtitle">
-              The community platform for Vietnamese osu!taiko players.
+              The community platform for VTC players.
               Join tournaments, track results, and connect with others.
             </p>
             <div className="hero-actions">

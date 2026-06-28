@@ -28,11 +28,22 @@ const Mappool = () => {
 
   const stages = [...new Set(mappool.map(m => m.stage))];
   const currentPool = mappool.filter(m => m.stage === activeStage);
+  
+  const averageSR = currentPool.length > 0 
+    ? (currentPool.reduce((acc, curr) => acc + curr.sr, 0) / currentPool.length).toFixed(2)
+    : 0;
 
   const getModColor = (mod) => {
     const m = mod.substring(0, 2).toUpperCase();
     const colors = { NM: '#4fc3f7', HD: '#ffd54f', HR: '#ef5350', DT: '#ab47bc', FM: '#66bb6a', TB: '#ff7043', EX: '#e040fb' };
     return colors[m] || '#90a4ae';
+  };
+
+  const formatLength = (seconds) => {
+    if (!seconds) return '-';
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
   if (loading) return <div className="container page-header"><p>Loading...</p></div>;
@@ -64,6 +75,12 @@ const Mappool = () => {
                   {stage}
                 </button>
               ))}
+            </div>
+            
+            <div className="stage-stats" style={{ marginBottom: '1.5rem', padding: '1rem', background: 'var(--color-bg-secondary)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <span style={{ color: 'var(--color-text-muted)' }}>Stage Average Difficulty:</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: 600, color: '#ffd54f' }}>{averageSR}★</span>
+              <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginLeft: 'auto' }}>Calculated dynamically based on mod attributes</span>
             </div>
 
             <div className="mp-grid">
@@ -105,6 +122,7 @@ const Mappool = () => {
                     <div className="mp-stats-row">
                       <div className="mp-stat" style={{ color: '#ffd54f' }}><span>SR</span>{map.sr.toFixed(2)}★</div>
                       <div className="mp-stat"><span>BPM</span>{map.bpm}</div>
+                      <div className="mp-stat"><span>Length</span>{formatLength(map.length)}</div>
                       <div className="mp-stat"><span>OD</span>{map.od}</div>
                       <div className="mp-stat"><span>HP</span>{map.hp}</div>
                     </div>

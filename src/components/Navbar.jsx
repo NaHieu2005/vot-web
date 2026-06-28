@@ -1,14 +1,54 @@
 import React, { useState } from 'react';
-import { Link, useLocation, useParams } from 'react-router-dom';
-import { Menu, X, Drum, ChevronDown } from 'lucide-react';
+import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
+import { Menu, X, Drum, ChevronDown, Bell, CheckCircle2 } from 'lucide-react';
+import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import './Navbar.css';
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [showNotifs, setShowNotifs] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  
   const location = useLocation();
   const params = useParams();
+  const navigate = useNavigate();
   const { user, login, logout, loading } = useAuth();
+
+  React.useEffect(() => {
+    if (user) {
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 60000); // Check every minute
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await axios.get('/api/notifications');
+      setNotifications(res.data);
+    } catch (err) {}
+  };
+
+  const markAsRead = async (id, link) => {
+    try {
+      await axios.put(`/api/notifications/${id}/read`);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+      if (link) {
+        navigate(link);
+        setShowNotifs(false);
+      }
+    } catch (err) {}
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      await axios.put('/api/notifications/read-all');
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    } catch (err) {}
+  };
+
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   const slug = location.pathname.match(/\/tournament\/([^/]+)/)?.[1];
   const isInTournament = !!slug;
@@ -33,7 +73,7 @@ const Navbar = () => {
       <div className="container nav-container">
         <Link to="/" className="nav-logo">
           <Drum size={24} className="nav-logo-icon" />
-          <span className="nav-logo-text">V<span className="accent">Taiko</span></span>
+          <span className="nav-logo-text">V<span className="accent">TC</span></span>
         </Link>
 
         <div className="nav-links">
@@ -60,10 +100,38 @@ const Navbar = () => {
           {loading ? (
             <div className="nav-loading" />
           ) : user ? (
-            <div className="nav-user">
-              <img src={user.avatarUrl} alt="" className="nav-avatar" />
-              <span className="nav-username">{user.username}</span>
-              <button onClick={logout} className="btn btn-ghost btn-sm">Logout</button>
+            <div className="nav-user" style={{ gap: '1.5rem' }}>
+              <div className="nav-notifs" style={{ position: 'relative' }}>
+                <button className="btn btn-icon" onClick={() => setShowNotifs(!showNotifs)}>
+                  <Bell size={20} />
+                  {unreadCount > 0 && <span className="notif-badge">{unreadCount}</span>}
+                </button>
+                {showNotifs && (
+                  <div className="notif-dropdown">
+                    <div className="notif-header">
+                      <span>Notifications</span>
+                      {unreadCount > 0 && <button className="btn btn-ghost btn-sm" onClick={markAllAsRead} style={{ fontSize: '0.8rem', padding: '0.2rem 0.5rem' }}><CheckCircle2 size={14} /> Mark all read</button>}
+                    </div>
+                    <div className="notif-list">
+                      {notifications.length === 0 ? (
+                        <div className="notif-empty">No notifications</div>
+                      ) : (
+                        notifications.map(n => (
+                          <div key={n.id} className={`notif-item ${!n.isRead ? 'unread' : ''}`} onClick={() => markAsRead(n.id, n.link)}>
+                            <p className="notif-message">{n.message}</p>
+                            <span className="notif-time">{new Date(n.createdAt).toLocaleDateString()}</span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <img src={user.avatarUrl} alt="" className="nav-avatar" />
+                <span className="nav-username">{user.username}</span>
+                <button onClick={logout} className="btn btn-ghost btn-sm">Logout</button>
+              </div>
             </div>
           ) : (
             <button onClick={login} className="btn btn-primary btn-sm">

@@ -11,3 +11,102 @@
   outline: none;
   border-color: var(--color-accent-primary);
 }
+
+.mappool-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.mappool-card.dragging {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  transform: scale(1.02);
+  z-index: 100;
+  border-color: var(--color-accent-primary);
+}
+
+.mappool-card-content {
+  display: flex;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  gap: 1rem;
+}
+
+.mappool-card-drag-handle {
+  color: var(--color-text-muted);
+  cursor: grab;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem;
+  border-radius: 4px;
+}
+
+.mappool-card-drag-handle:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.mappool-card-drag-handle:active {
+  cursor: grabbing;
+}
+
+.mod-badge {
+  font-weight: 800;
+  font-size: 0.85rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.mod-badge.nm { background: #4caf50; color: #fff; }
+.mod-badge.hd { background: #ffeb3b; color: #000; }
+.mod-badge.hr { background: #f44336; color: #fff; }
+.mod-badge.dt { background: #9c27b0; color: #fff; }
+.mod-badge.fm { background: #2196f3; color: #fff; }
+.mod-badge.tb { background: #000; color: #fff; border: 1px solid #ff9800; }
+
+.mappool-card-info {
+  flex: 1;
+  min-width: 0; /* for truncation */
+}
+
+.mappool-card-info .title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mappool-card-info .artist {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mappool-card-info .diff {
+  color: #ffb7b2;
+  font-weight: 500;
+}
+
+.stage-pill {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.picker-badge {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  background: rgba(0,0,0,0.3);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}

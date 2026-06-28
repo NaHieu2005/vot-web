@@ -11,6 +11,7 @@ const mappoolRoutes = require('./routes/mappool');
 const scheduleRoutes = require('./routes/schedule');
 const statsRoutes = require('./routes/stats');
 const staffRoutes = require('./routes/staff');
+const notificationRoutes = require('./routes/notifications');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -40,6 +41,7 @@ app.use('/api/mappool', mappoolRoutes);
 app.use('/api/schedule', scheduleRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/staff', staffRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Seed VOT6 on first run
 const prisma = require('./db');
@@ -48,9 +50,9 @@ async function seedIfEmpty() {
   if (count === 0) {
     await prisma.tournament.create({
       data: {
-        name: 'Vietnam osu!taiko Tournament 6',
-        slug: 'vot6',
-        shortName: 'VOT6',
+        name: 'Vietnam Taiko Championship 6',
+        slug: 'vtc6',
+        shortName: 'VTC6',
         description: 'The premier national osu!taiko tournament for Vietnamese players. Season 6 brings fiercer competition than ever.',
         status: 'ongoing',
         accentColor: '#d92332',
@@ -58,7 +60,7 @@ async function seedIfEmpty() {
         endDate: '2026-08-31',
       }
     });
-    console.log('Seeded VOT6 tournament');
+    console.log('Seeded VTC6 tournament');
   }
 }
 
@@ -69,7 +71,7 @@ app.use((req, res) => {
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 
-app.listen(PORT, async () => {
+app.listen(PORT, '0.0.0.0', async () => {
   console.log(`Server running on port ${PORT}`);
   await seedIfEmpty();
 });

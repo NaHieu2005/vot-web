@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { createPortal } from 'react-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { Plus, Trash2, Upload, Settings, Music, Calendar, Users, Edit } from 'lucide-react';
@@ -20,9 +22,8 @@ const AdminDashboard = () => {
   const [mappoolList, setMappoolList] = useState([]);
   const [editingMapId, setEditingMapId] = useState(null);
   
-  // Drag and drop refs
-  const dragItem = useRef();
-  const dragOverItem = useRef();
+  // Mappool
+  const [filterStage, setFilterStage] = useState('All');
   const [savingOrder, setSavingOrder] = useState(false);
 
   // Excel & Stats
@@ -33,7 +34,7 @@ const AdminDashboard = () => {
 
   // Schedule
   const [scheduleList, setScheduleList] = useState([]);
-  const [sForm, setSForm] = useState({ stage: 'Group Stage', player1Name: '', player2Name: '', date: '', matchTime: '', status: 'upcoming' });
+  const [sForm, setSForm] = useState({ stage: 'Group Stage', player1Name: '', player2Name: '', date: '', matchTime: '', status: 'upcoming', streamer: '', commentators: '', player1Avatar: '', player2Avatar: '' });
   const [editingScheduleId, setEditingScheduleId] = useState(null);
 
   // Staff
@@ -90,7 +91,7 @@ const AdminDashboard = () => {
   };
 
   if (authLoading) return <div className="container page-header"><p>Loading...</p></div>;
-  if (!user || user.role !== 'ADMIN') return <div className="container page-header"><h2>Access Denied</h2><p>Admin only.</p></div>;
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'STAFF')) return <div className="container page-header"><h2>Access Denied</h2><p>Admin and Staff only.</p></div>;
 
   const handleCreateTournament = async (e) => {
     e.preventDefault();
@@ -154,29 +155,35 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleDragStart = (e, position) => {
-    dragItem.current = position;
-  };
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+    
+    const filtered = filterStage === 'All' ? mappoolList : mappoolList.filter(m => m.stage === filterStage);
+    const reordered = Array.from(filtered);
+    const [movedItem] = reordered.splice(result.source.index, 1);
+    reordered.splice(result.destination.index, 0, movedItem);
 
-  const handleDragEnter = (e, position) => {
-    dragOverItem.current = position;
-  };
-
-  const handleDrop = (e) => {
-    if (dragItem.current == null || dragOverItem.current == null) return;
-    const copyListItems = [...mappoolList];
-    const dragItemContent = copyListItems[dragItem.current];
-    copyListItems.splice(dragItem.current, 1);
-    copyListItems.splice(dragOverItem.current, 0, dragItemContent);
-    dragItem.current = null;
-    dragOverItem.current = null;
-    setMappoolList(copyListItems);
+    if (filterStage === 'All') {
+      setMappoolList(reordered);
+    } else {
+      let counter = 0;
+      const newList = mappoolList.map(m => {
+        if (m.stage === filterStage) {
+          return reordered[counter++];
+        }
+        return m;
+      });
+      setMappoolList(newList);
+    }
   };
 
   const handleSaveOrder = async () => {
     setSavingOrder(true);
     try {
-      const payload = mappoolList.map((map, index) => ({ id: map.id, order: index }));
+      const payload = filterStage === 'All' 
+        ? mappoolList.map((map, index) => ({ id: map.id, order: index }))
+        : mappoolList.filter(m => m.stage === filterStage).map((map, index) => ({ id: map.id, order: index }));
+        
       await axios.post('/api/mappool/reorder', { maps: payload });
       setSavingOrder(false);
       fetchMappoolList();
@@ -257,7 +264,7 @@ const AdminDashboard = () => {
       } else {
         await axios.post('/api/schedule', { ...sForm, tournamentId: selectedTournament.id });
       }
-      setSForm({ stage: 'Group Stage', player1Name: '', player2Name: '', date: '', matchTime: '', status: 'upcoming' });
+      setSForm({ stage: 'Group Stage', player1Name: '', player2Name: '', date: '', matchTime: '', status: 'upcoming', streamer: '', commentators: '', player1Avatar: '', player2Avatar: '' });
       fetchScheduleList();
     } catch (err) {
       alert('Error saving schedule');
@@ -379,70 +386,102 @@ const AdminDashboard = () => {
                 {savingOrder ? 'Saving...' : 'Save Order'}
               </button>
             </div>
-            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>
-              Drag and drop rows to reorder them within their stages. Remember to click <strong>Save Order</strong>.
-            </p>
-            <div className="table-wrapper">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Stage</th>
-                    <th>Mod</th>
-                    <th>Beatmap</th>
-                    <th>Picked By</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {mappoolList.map((map, index) => {
-                    const isEditing = editingMapId === map.id;
-                    return (
-                      <tr 
-                        key={map.id}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, index)}
-                        onDragEnter={(e) => handleDragEnter(e, index)}
-                        onDragEnd={handleDrop}
-                        onDragOver={(e) => e.preventDefault()}
-                        style={{ cursor: 'grab' }}
-                      >
-                        <td>
-                          {isEditing ? (
-                            <input className="input" style={{ padding: '0.4rem', fontSize: '0.8rem' }} value={map.stage} onChange={e => setMappoolList(mappoolList.map(m => m.id === map.id ? {...m, stage: e.target.value} : m))} />
-                          ) : map.stage}
-                        </td>
-                        <td>
-                          {isEditing ? (
-                            <input className="input" style={{ padding: '0.4rem', fontSize: '0.8rem', width: '60px' }} value={map.mod} onChange={e => setMappoolList(mappoolList.map(m => m.id === map.id ? {...m, mod: e.target.value} : m))} />
-                          ) : map.mod}
-                        </td>
-                        <td>
-                          <div style={{ fontWeight: 600, fontSize: '0.85rem' }}>{map.title}</div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{map.diffName}</div>
-                        </td>
-                        <td>
-                          {isEditing ? (
-                            <input className="input" style={{ padding: '0.4rem', fontSize: '0.8rem' }} value={map.picker || ''} onChange={e => setMappoolList(mappoolList.map(m => m.id === map.id ? {...m, picker: e.target.value} : m))} />
-                          ) : (map.picker || '-')}
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', gap: '0.5rem' }}>
-                            {isEditing ? (
-                              <button className="btn btn-primary btn-sm" onClick={() => handleUpdateMap(map)}>Save</button>
-                            ) : (
-                              <button className="btn btn-secondary btn-sm" onClick={() => setEditingMapId(map.id)}>Edit</button>
-                            )}
-                            <button className="btn btn-ghost btn-sm" style={{ color: 'var(--color-accent-primary)' }} onClick={() => handleDeleteMap(map.id)}>
-                              <Trash2 size={14} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
+              {['All', 'Qualifiers', 'RO32', 'RO16', 'QF', 'SF', 'F', 'GF'].map(s => (
+                <button 
+                  key={s} 
+                  className={`btn btn-sm ${filterStage === s ? 'btn-primary' : 'btn-ghost'}`}
+                  style={{ borderRadius: '20px' }}
+                  onClick={() => setFilterStage(s)}
+                >
+                  {s}
+                </button>
+              ))}
             </div>
+
+            <p style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginBottom: '1rem' }}>
+              Drag and drop cards to reorder them. Remember to click <strong>Save Order</strong>.
+            </p>
+
+            <DragDropContext onDragEnd={handleDragEnd}>
+              <Droppable droppableId="mappool">
+                {(provided) => (
+                  <div {...provided.droppableProps} ref={provided.innerRef} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    {(filterStage === 'All' ? mappoolList : mappoolList.filter(m => m.stage === filterStage)).map((map, index) => {
+                      const isEditing = editingMapId === map.id;
+                      return (
+                        <Draggable key={map.id.toString()} draggableId={map.id.toString()} index={index}>
+                          {(provided, snapshot) => {
+                            const child = (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                className={`card mappool-card ${snapshot.isDragging ? 'dragging' : ''}`}
+                                style={provided.draggableProps.style}
+                              >
+                                <div className="mappool-card-content">
+                                  <div className="mappool-card-drag-handle" {...provided.dragHandleProps}>
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg>
+                                  </div>
+                                  
+                                  <div className="mappool-card-mod">
+                                    {isEditing ? (
+                                      <input className="input" style={{ width: '60px', padding: '0.2rem' }} value={map.mod} onChange={e => setMappoolList(mappoolList.map(m => m.id === map.id ? {...m, mod: e.target.value} : m))} />
+                                    ) : (
+                                      <span className={`mod-badge ${map.mod.substring(0,2).toLowerCase()}`}>{map.mod}</span>
+                                    )}
+                                  </div>
+
+                                  <div className="mappool-card-info">
+                                    <div className="title" style={{ fontWeight: 600, fontSize: '0.9rem' }}>{map.title}</div>
+                                    <div className="artist" style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>{map.artist} // {map.mapper} <span className="diff">[{map.diffName}]</span></div>
+                                  </div>
+
+                                  <div className="mappool-card-stage">
+                                    {isEditing ? (
+                                      <select className="input" style={{ padding: '0.2rem' }} value={map.stage} onChange={e => setMappoolList(mappoolList.map(m => m.id === map.id ? {...m, stage: e.target.value} : m))}>
+                                        {['Qualifiers', 'RO32', 'RO16', 'QF', 'SF', 'F', 'GF'].map(s => <option key={s} value={s}>{s}</option>)}
+                                      </select>
+                                    ) : (
+                                      <span className="stage-pill">{map.stage}</span>
+                                    )}
+                                  </div>
+
+                                  <div className="mappool-card-picker">
+                                    {isEditing ? (
+                                      <input className="input" style={{ width: '100px', padding: '0.2rem' }} placeholder="Picker" value={map.picker || ''} onChange={e => setMappoolList(mappoolList.map(m => m.id === map.id ? {...m, picker: e.target.value} : m))} />
+                                    ) : (
+                                      map.picker ? <span className="picker-badge">Pick: {map.picker}</span> : null
+                                    )}
+                                  </div>
+
+                                  <div className="mappool-card-actions" style={{ marginLeft: 'auto', display: 'flex', gap: '0.5rem' }}>
+                                    {isEditing ? (
+                                      <button className="btn btn-primary btn-sm" onClick={() => handleUpdateMap(map)}>Save</button>
+                                    ) : (
+                                      <button className="btn btn-secondary btn-sm" onClick={() => setEditingMapId(map.id)}><Edit size={14}/></button>
+                                    )}
+                                    <button className="btn btn-ghost btn-sm" style={{ color: 'var(--color-accent-primary)' }} onClick={() => handleDeleteMap(map.id)}>
+                                      <Trash2 size={14} />
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+
+                            if (snapshot.isDragging) {
+                              return createPortal(child, document.body);
+                            }
+                            return child;
+                          }}
+                        </Draggable>
+                      );
+                    })}
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </DragDropContext>
           </div>
         </div>
       )}
@@ -542,6 +581,17 @@ const AdminDashboard = () => {
                 <input className="input" type="datetime-local" value={sForm.matchTime ? new Date(new Date(sForm.matchTime).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : ''} onChange={e => setSForm({...sForm, matchTime: new Date(e.target.value).toISOString()})} />
               </div>
               <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <input className="input" placeholder="Streamer (Optional)" value={sForm.streamer || ''} onChange={e => setSForm({...sForm, streamer: e.target.value})} />
+                <input className="input" placeholder="Commentators (Optional)" value={sForm.commentators || ''} onChange={e => setSForm({...sForm, commentators: e.target.value})} />
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem', flexDirection: 'column', padding: '0.5rem', background: 'rgba(0,0,0,0.2)', borderRadius: '4px' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>Avatars (leave blank to auto-fetch from osu!)</span>
+                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                  <input className="input" placeholder="P1 Avatar URL" value={sForm.player1Avatar || ''} onChange={e => setSForm({...sForm, player1Avatar: e.target.value})} />
+                  <input className="input" placeholder="P2 Avatar URL" value={sForm.player2Avatar || ''} onChange={e => setSForm({...sForm, player2Avatar: e.target.value})} />
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
                 <button type="submit" className="btn btn-primary">{editingScheduleId ? 'Save Changes' : 'Add Match'}</button>
                 {editingScheduleId && (
                   <button type="button" className="btn btn-secondary" onClick={() => { setEditingScheduleId(null); setSForm({ stage: 'Group Stage', player1Name: '', player2Name: '', date: '', matchTime: '', status: 'upcoming' }); }}>Cancel</button>
@@ -577,8 +627,26 @@ const AdminDashboard = () => {
                         </span>
                       </td>
                       <td>
+                        {s.streamer && <div style={{ fontSize: '0.8rem' }}>🎥 {s.streamer}</div>}
+                        {s.commentators && <div style={{ fontSize: '0.8rem' }}>🎙️ {s.commentators}</div>}
+                      </td>
+                      <td>
                         <div style={{ display: 'flex', gap: '0.5rem' }}>
-                          <button className="btn btn-secondary btn-sm" onClick={() => { setSForm({ stage: s.stage, player1Name: s.player1Name || '', player2Name: s.player2Name || '', date: s.date, matchTime: s.matchTime || '', status: s.status }); setEditingScheduleId(s.id); }}>Edit</button>
+                          <button className="btn btn-secondary btn-sm" onClick={() => { 
+                            setSForm({ 
+                              stage: s.stage, 
+                              player1Name: s.player1Name || '', 
+                              player2Name: s.player2Name || '', 
+                              date: s.date, 
+                              matchTime: s.matchTime || '', 
+                              status: s.status,
+                              streamer: s.streamer || '',
+                              commentators: s.commentators || '',
+                              player1Avatar: s.player1Avatar || '',
+                              player2Avatar: s.player2Avatar || ''
+                            }); 
+                            setEditingScheduleId(s.id); 
+                          }}>Edit</button>
                           <button className="btn btn-ghost btn-sm" style={{ color: 'var(--color-accent-primary)' }} onClick={() => handleDeleteSchedule(s.id)}><Trash2 size={14} /></button>
                         </div>
                       </td>

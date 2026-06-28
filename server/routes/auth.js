@@ -115,21 +115,30 @@ router.get(
 );
 
 // Middleware to check auth via JWT
-const requireAuth = (req, res, next) => {
+const requireAuth = async (req, res, next) => {
   const token = req.cookies.token;
   if (!token) return res.status(401).json({ error: 'Unauthorized' });
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded;
+    const dbUser = await prisma.user.findUnique({ where: { id: decoded.id } });
+    if (!dbUser) return res.status(401).json({ error: 'User not found' });
+    
+    req.user = { ...decoded, role: dbUser.role };
     next();
   } catch (err) {
     return res.status(401).json({ error: 'Invalid token' });
   }
 };
 
-router.get('/me', requireAuth, (req, res) => {
-  res.json(req.user);
+router.get('/me', requireAuth, async (req, res) => {
+  try {
+    const dbUser = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!dbUser) return res.status(404).json({ error: 'User not found' });
+    res.json(dbUser);
+  } catch (err) {
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 router.post('/logout', (req, res) => {

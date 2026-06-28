@@ -4,9 +4,9 @@ const { requireAuth } = require('./auth');
 
 const router = express.Router();
 
-const requireAdmin = (req, res, next) => {
-  if (req.user.role === 'ADMIN') next();
-  else res.status(403).json({ error: 'Admin only' });
+const requireStaff = (req, res, next) => {
+  if (req.user.role === 'STAFF' || req.user.role === 'ADMIN') next();
+  else res.status(403).json({ error: 'Forbidden' });
 };
 
 // Get all tournaments
@@ -42,7 +42,7 @@ router.get('/:slug', async (req, res) => {
 });
 
 // Create tournament (Admin only)
-router.post('/', requireAuth, requireAdmin, async (req, res) => {
+router.post('/', requireAuth, requireStaff, async (req, res) => {
   try {
     const tournament = await prisma.tournament.create({ data: req.body });
     res.json(tournament);
@@ -52,7 +52,7 @@ router.post('/', requireAuth, requireAdmin, async (req, res) => {
 });
 
 // Update tournament (Admin only)
-router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
+router.put('/:id', requireAuth, requireStaff, async (req, res) => {
   try {
     const tournament = await prisma.tournament.update({
       where: { id: parseInt(req.params.id) },
@@ -65,7 +65,7 @@ router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
 });
 
 // Delete tournament (Admin only)
-router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
+router.delete('/:id', requireAuth, requireStaff, async (req, res) => {
   try {
     await prisma.tournament.delete({ where: { id: parseInt(req.params.id) } });
     res.json({ success: true });
