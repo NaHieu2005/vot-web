@@ -1,7 +1,7 @@
 const express = require('express');
 const axios = require('axios');
 const prisma = require('../db');
-const { requireAuth } = require('./auth');
+const { requireAuth, optionalAuth } = require('./auth');
 
 const router = express.Router();
 
@@ -62,29 +62,98 @@ async function getModdedStats(beatmapId, modString, baseStats) {
   }
 
   const m = modString.toUpperCase();
+
+  if (m.includes('HR')) {
+    hp = Math.min(10, hp * 1.4);
+    od = Math.min(10, od * 1.4);
+  } else if (m.includes('EZ')) {
+    hp = hp * 0.5;
+    od = od * 0.5;
+  }
+
   if (m.includes('DT')) {
     bpm = bpm * 1.5;
     length = Math.floor(length / 1.5);
+    // Taiko Equivalent OD (300 HitWindow: 50 - 3*OD. DT divides window by 1.5)
+    od = (16.66666 + 2 * od) / 3;
   } else if (m.includes('HT')) {
     bpm = bpm * 0.75;
     length = Math.floor(length / 0.75);
+    // HT multiplies window by 4/3
+    od = (4 * od - 16.66666) / 3;
   }
+
+  // Round to 1 decimal place for cleaner display
+  hp = Math.round(hp * 10) / 10;
+  od = Math.round(od * 10) / 10;
 
   return { sr, hp, od, bpm, length };
 }
 
 // Get mappool (filter by tournamentId)
-router.get('/', async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
   try {
     const where = {};
     if (req.query.tournamentId) where.tournamentId = parseInt(req.query.tournamentId);
     
+    let canSeeAll = false;
+    if (req.user && req.user.role === 'ADMIN') {
+      canSeeAll = true;
+    } else if (req.user && req.query.tournamentId) {
+      const staffRecord = await prisma.tournamentStaff.findFirst({
+        where: {
+          userId: req.user.id,
+          tournamentId: parseInt(req.query.tournamentId),
+          staffRole: { in: ['Host', 'Mappooler'] }
+        }
+      });
+      if (staffRecord) canSeeAll = true;
+    }
+
+    const configs = await prisma.stageConfig.findMany({ where });
+    const publishedStages = configs.filter(c => c.mappoolPublished).map(c => c.stage);
+    
+    console.log(`[DEBUG Mappool] canSeeAll: ${canSeeAll}, req.user: ${req.user?.username}, publishedStages: ${publishedStages.join(', ')}`);
+
     const mappool = await prisma.mappool.findMany({
-      where,
+      where: {
+        ...where,
+        ...(canSeeAll ? {} : { stage: { in: publishedStages } })
+      },
       orderBy: [{ stage: 'asc' }, { order: 'asc' }],
       include: { tournament: { select: { name: true, slug: true } } }
     });
-    res.json(mappool);
+
+    res.json({ mappool, configs: canSeeAll ? configs : configs.filter(c => c.mappoolPublished || c.schedulePublished) });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update StageConfig (Mappack URL and Publish state)
+router.post('/config', requireAuth, requireStaff, async (req, res) => {
+  const { tournamentId, stage, mappackUrl, mappoolPublished, schedulePublished } = req.body;
+  if (!tournamentId || !stage) return res.status(400).json({ error: 'tournamentId and stage required' });
+
+  try {
+    const updateData = { mappackUrl };
+    if (typeof mappoolPublished !== 'undefined') updateData.mappoolPublished = mappoolPublished;
+    if (typeof schedulePublished !== 'undefined') updateData.schedulePublished = schedulePublished;
+
+    const config = await prisma.stageConfig.upsert({
+      where: {
+        tournamentId_stage: { tournamentId: parseInt(tournamentId), stage }
+      },
+      update: updateData,
+      create: { 
+        tournamentId: parseInt(tournamentId), 
+        stage, 
+        mappackUrl, 
+        mappoolPublished: mappoolPublished || false,
+        schedulePublished: schedulePublished || false
+      }
+    });
+    res.json(config);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

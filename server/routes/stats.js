@@ -28,6 +28,27 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.get('/mp', async (req, res) => {
+  try {
+    const { tournamentId } = req.query;
+    if (!tournamentId) return res.status(400).json({ error: 'tournamentId required' });
+
+    // Fetch MatchScores
+    const matchScores = await prisma.matchScore.findMany({
+      where: { tournamentId: parseInt(tournamentId) }
+    });
+
+    // Fetch Mappools for mapping the beatmapId to Pick (NM1, HD1...)
+    const mappools = await prisma.mappool.findMany({
+      where: { tournamentId: parseInt(tournamentId) }
+    });
+
+    res.json({ matchScores, mappools });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 router.post('/upload', requireAuth, requireStaff, upload.single('file'), async (req, res) => {
   if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
   const tournamentId = parseInt(req.body.tournamentId);

@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const session = require('express-session');
@@ -12,6 +13,7 @@ const scheduleRoutes = require('./routes/schedule');
 const statsRoutes = require('./routes/stats');
 const staffRoutes = require('./routes/staff');
 const notificationRoutes = require('./routes/notifications');
+const bracketRoutes = require('./routes/bracket');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -22,6 +24,7 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(cookieParser());
+app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use(
   session({
@@ -42,6 +45,7 @@ app.use('/api/schedule', scheduleRoutes);
 app.use('/api/stats', statsRoutes);
 app.use('/api/staff', staffRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/bracket', bracketRoutes);
 
 // Seed VOT6 on first run
 const prisma = require('./db');
@@ -64,7 +68,6 @@ async function seedIfEmpty() {
   }
 }
 
-const path = require('path');
 app.use(express.static(path.join(__dirname, '../dist')));
 
 app.use((req, res) => {

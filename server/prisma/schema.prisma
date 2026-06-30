@@ -17,8 +17,10 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
-  stats          PlayerStat[]
-  tournamentStaff TournamentStaff[]
+  stats             PlayerStat[]
+  tournamentStaff   TournamentStaff[]
+  tournamentPlayers TournamentPlayer[]
+  lobbyPlayers      LobbyPlayer[]
 }
 
 model Tournament {
@@ -35,6 +37,9 @@ model Tournament {
   rankMin     Int?
   rankMax     Int?
   rules       String?
+  forumLink       String?
+  twitchLink      String?
+  spreadsheetLink String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -43,6 +48,9 @@ model Tournament {
   schedules   Schedule[]
   stats       PlayerStat[]
   staff       TournamentStaff[]
+  players     TournamentPlayer[]
+  bracketNodes BracketNode[]
+  stageConfigs StageConfig[]
 }
 
 model TournamentStaff {
@@ -50,11 +58,25 @@ model TournamentStaff {
   userId       Int
   tournamentId Int
   staffRole    String     // "Host", "Mappooler", "Referee", "Streamer", "Commentator", "GFX"
+  status       String     @default("pending") // "pending", "approved", "rejected"
   user         User       @relation(fields: [userId], references: [id])
   tournament   Tournament @relation(fields: [tournamentId], references: [id])
   createdAt    DateTime   @default(now())
 
   @@unique([userId, tournamentId, staffRole])
+}
+
+model TournamentPlayer {
+  id           Int        @id @default(autoincrement())
+  userId       Int
+  tournamentId Int
+  discordId    String?
+  discordName  String?
+  user         User       @relation(fields: [userId], references: [id])
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  createdAt    DateTime   @default(now())
+
+  @@unique([userId, tournamentId])
 }
 
 model Mappool {
@@ -80,11 +102,25 @@ model Mappool {
   updatedAt    DateTime   @updatedAt
 }
 
+model StageConfig {
+  id           Int        @id @default(autoincrement())
+  tournamentId Int
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  stage             String
+  mappackUrl        String?
+  mappoolPublished  Boolean    @default(false)
+  schedulePublished Boolean    @default(false)
+  
+  @@unique([tournamentId, stage])
+}
+
 model Schedule {
   id           Int        @id @default(autoincrement())
   tournamentId Int
   tournament   Tournament @relation(fields: [tournamentId], references: [id])
   stage        String
+  matchIdentifier String?
+  type         String     @default("match") // "match" or "qualifier"
   date         String
   status       String     @default("upcoming") // "upcoming", "active", "completed"
   matchTime    DateTime?
@@ -96,15 +132,29 @@ model Schedule {
   player2Avatar String?
   score1       Int?
   score2       Int?
+  matchScores  MatchScore[]
   refereeId    Int?
   refereeName  String?
   streamer     String?
   commentators String?
+  mpLink       String?
   rescheduleTime DateTime?
   rescheduleBy   String?
   rescheduleStatus String? // "pending", "accepted"
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
+  lobbyPlayers LobbyPlayer[]
+}
+
+model LobbyPlayer {
+  id         Int      @id @default(autoincrement())
+  scheduleId Int
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id])
+  schedule   Schedule @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([scheduleId, userId])
 }
 
 model PlayerStat {
@@ -123,6 +173,26 @@ model PlayerStat {
   @@unique([userId, tournamentId, stage])
 }
 
+model MatchScore {
+  id           Int        @id @default(autoincrement())
+  tournamentId Int
+  stage        String
+  scheduleId   Int
+  beatmapId    Int
+  playerName   String
+  score        Int
+  accuracy     Float
+  count300     Int
+  count100     Int
+  count50      Int
+  countMiss    Int
+  createdAt    DateTime   @default(now())
+
+  schedule     Schedule   @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+
+  @@unique([scheduleId, beatmapId, playerName])
+}
+
 model Notification {
   id         Int      @id @default(autoincrement())
   targetUser String   // username
@@ -130,4 +200,27 @@ model Notification {
   link       String?
   isRead     Boolean  @default(false)
   createdAt  DateTime @default(now())
+}
+
+model BracketNode {
+  id           Int        @id @default(autoincrement())
+  tournamentId Int
+  tournament   Tournament @relation(fields: [tournamentId], references: [id])
+  bracketType  String     // "Winners", "Losers", "Grand Final"
+  round        Int        // 1, 2, 3... (Used for columns)
+  matchOrder   Int        // 1, 2, 3... (Used for rows within the column)
+  player1      String?
+  player2      String?
+  score1       Int?
+  score2       Int?
+  isCompleted  Boolean    @default(false)
+  
+  bestOf            Int?
+  matchIdentifier   String? 
+  nextWinnerMatchId Int?
+  nextLoserMatchId  Int?
+  scheduleId        Int?      @unique
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 }

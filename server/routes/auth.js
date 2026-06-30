@@ -131,6 +131,22 @@ const requireAuth = async (req, res, next) => {
   }
 };
 
+const optionalAuth = async (req, res, next) => {
+  const token = req.cookies.token;
+  if (!token) return next();
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    const dbUser = await prisma.user.findUnique({ where: { id: decoded.id } });
+    if (dbUser) {
+      req.user = { ...decoded, role: dbUser.role };
+    }
+    next();
+  } catch (err) {
+    next(); // Ignore invalid tokens
+  }
+};
+
 router.get('/me', requireAuth, async (req, res) => {
   try {
     const dbUser = await prisma.user.findUnique({ where: { id: req.user.id } });
@@ -148,3 +164,4 @@ router.post('/logout', (req, res) => {
 
 module.exports = router;
 module.exports.requireAuth = requireAuth;
+module.exports.optionalAuth = optionalAuth;
