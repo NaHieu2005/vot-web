@@ -35,39 +35,21 @@ const Home = () => {
             <div className="hero-badge-row">
               <span className="badge badge-live">● Community Hub</span>
             </div>
-            <h1 className="hero-title">
+            <h1 className="hero-title" style={{ textAlign: 'center' }}>
               Vietnam<br />
-              Taiko <span className="accent">Championship</span>
+              <span className="text-gradient">osu!taiko Community</span>
             </h1>
-            <p className="hero-subtitle">
-              The community platform for VTC players.
-              Join tournaments, track results, and connect with others.
+            <p className="hero-subtitle" style={{ textAlign: 'center', margin: '0 auto' }}>
+              The premier platform for VTC players.
+              Compete in high-stakes tournaments, track your legacy, and connect with the elite.
             </p>
-            <div className="hero-actions">
+            <div className="hero-actions" style={{ justifyContent: 'center' }}>
               <a href="#tournaments" className="btn btn-primary btn-lg">
                 View Tournaments <ArrowRight size={18} />
               </a>
-              <a href="https://discord.gg/" target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-lg">
+              <a href="https://discord.gg/teHvDXp7Ef" target="_blank" rel="noopener noreferrer" className="btn btn-secondary btn-lg">
                 Join Discord
               </a>
-            </div>
-          </div>
-
-          <div className="hero-stats animate-in stagger-2">
-            <div className="hero-stat">
-              <Drum size={20} />
-              <span className="hero-stat-value">6</span>
-              <span className="hero-stat-label">Seasons</span>
-            </div>
-            <div className="hero-stat">
-              <Users size={20} />
-              <span className="hero-stat-value">100+</span>
-              <span className="hero-stat-label">Players</span>
-            </div>
-            <div className="hero-stat">
-              <Trophy size={20} />
-              <span className="hero-stat-value">5</span>
-              <span className="hero-stat-label">Champions</span>
             </div>
           </div>
         </div>
@@ -85,28 +67,27 @@ const Home = () => {
         ) : tournaments.length === 0 ? (
           <div className="empty-state">No tournaments found.</div>
         ) : (
-          <div className="tournament-grid">
+          <div className="tournament-list">
             {tournaments.map((t, i) => (
-              <Link to={`/tournament/${t.slug}`} key={t.id} className={`tournament-card card animate-in stagger-${i + 1}`}>
-                <div className="tc-banner" style={{ background: `linear-gradient(135deg, ${t.accentColor || '#d92332'}22, ${t.accentColor || '#d92332'}08)` }}>
-                  <div className="tc-accent-line" style={{ background: t.accentColor || '#d92332' }} />
-                  <Drum size={48} style={{ color: t.accentColor || '#d92332', opacity: 0.3 }} />
-                </div>
-                <div className="tc-body">
-                  <div className="tc-header">
+              <Link to={`/tournament/${t.slug}`} key={t.id} className={`tournament-horizontal-card animate-in stagger-${i + 1}`} style={{ '--card-accent': t.accentColor || '#d92332' }}>
+                <div className="tc-info">
+                  <div className="tc-info-header">
                     {getStatusBadge(t.status)}
                     <span className="tc-short">{t.shortName}</span>
                   </div>
-                  <h3 className="tc-name">{t.name}</h3>
+                  <h3 className="tc-name-italic">{t.name}</h3>
                   <p className="tc-desc">{t.description}</p>
-                  <div className="tc-meta">
-                    {t.startDate && (
-                      <span className="tc-date">
-                        <Calendar size={14} /> {t.startDate}
-                      </span>
-                    )}
-                    <span className="tc-arrow">View details →</span>
+                  <div className="tc-action">
+                    <span className="btn-learn-more">Learn More</span>
                   </div>
+                </div>
+                <div className="tc-visual" style={{ backgroundImage: t.bannerImage ? `url(${t.bannerImage})` : 'none' }}>
+                  {!t.bannerImage && <Drum size={120} className="tc-visual-icon" />}
+                  <div className="tc-crosshair top-left"></div>
+                  <div className="tc-crosshair top-right"></div>
+                  <div className="tc-crosshair bottom-left"></div>
+                  <div className="tc-crosshair bottom-right"></div>
+                  <div className="tc-visual-overlay"></div>
                 </div>
               </Link>
             ))}
@@ -114,17 +95,7 @@ const Home = () => {
         )}
       </section>
 
-      {/* Community Section */}
-      <section className="section container">
-        <div className="community-cta glass-panel animate-in stagger-4">
-          <Sparkles size={32} className="accent" />
-          <h2>Join the community</h2>
-          <p>Connect with hundreds of other taiko players on our Discord server.</p>
-          <a href="https://discord.gg/" target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-lg">
-            Join Discord Server
-          </a>
-        </div>
-      </section>
+      {/* Removed Community CTA as requested */}
     </div>
   );
 };

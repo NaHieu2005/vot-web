@@ -8,6 +8,7 @@ const Mappool = () => {
   const { slug } = useParams();
   const [tournament, setTournament] = useState(null);
   const [mappool, setMappool] = useState([]);
+  const [configs, setConfigs] = useState({});
   const [activeStage, setActiveStage] = useState('');
   const [loading, setLoading] = useState(true);
 
@@ -17,8 +18,13 @@ const Mappool = () => {
         const tRes = await axios.get(`/api/tournaments/${slug}`);
         setTournament(tRes.data);
         const mRes = await axios.get(`/api/mappool?tournamentId=${tRes.data.id}`);
-        setMappool(mRes.data);
-        const stages = [...new Set(mRes.data.map(m => m.stage))];
+        setMappool(mRes.data.mappool);
+        
+        const configMap = {};
+        mRes.data.configs.forEach(c => configMap[c.stage] = c.mappackUrl);
+        setConfigs(configMap);
+
+        const stages = [...new Set(mRes.data.mappool.map(m => m.stage))];
         if (stages.length > 0) setActiveStage(stages[0]);
       } catch (err) {}
       setLoading(false);
@@ -56,7 +62,6 @@ const Mappool = () => {
             <ArrowLeft size={16} /> {tournament?.shortName || slug}
           </Link>
           <h1>Mappool</h1>
-          <p>Beatmaps selected for each stage.</p>
         </div>
 
         {stages.length === 0 ? (
@@ -80,7 +85,16 @@ const Mappool = () => {
             <div className="stage-stats" style={{ marginBottom: '1.5rem', padding: '1rem', background: 'var(--color-bg-secondary)', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '1rem' }}>
               <span style={{ color: 'var(--color-text-muted)' }}>Stage Average Difficulty:</span>
               <span style={{ fontSize: '1.25rem', fontWeight: 600, color: '#ffd54f' }}>{averageSR}★</span>
-              <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)', marginLeft: 'auto' }}>Calculated dynamically based on mod attributes</span>
+              
+              <div style={{ marginLeft: 'auto' }}>
+                {configs[activeStage] ? (
+                  <a href={configs[activeStage]} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-sm" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Download size={16} /> Download Mappack
+                  </a>
+                ) : (
+                  <span style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>Mappack link not available</span>
+                )}
+              </div>
             </div>
 
             <div className="mp-grid">

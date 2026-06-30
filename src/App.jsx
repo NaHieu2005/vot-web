@@ -5,6 +5,7 @@ import Home from './pages/Home';
 import TournamentPage from './pages/TournamentPage';
 import Mappool from './pages/Mappool';
 import Schedule from './pages/Schedule';
+import Bracket from './pages/Bracket';
 import Participants from './pages/Participants';
 import Rules from './pages/Rules';
 import Staff from './pages/Staff';
@@ -20,7 +21,8 @@ function App() {
         <Route path="tournament/:slug" element={<TournamentPage />} />
         <Route path="tournament/:slug/mappool" element={<Mappool />} />
         <Route path="tournament/:slug/schedule" element={<Schedule />} />
-        <Route path="tournament/:slug/participants" element={<Participants />} />
+        <Route path="tournament/:slug/bracket" element={<Bracket />} />
+        <Route path="tournament/:slug/players" element={<Participants />} />
         <Route path="tournament/:slug/rules" element={<Rules />} />
         <Route path="tournament/:slug/staff" element={<Staff />} />
         <Route path="tournament/:slug/stats" element={<Statistics />} />

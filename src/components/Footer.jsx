@@ -15,7 +15,7 @@ const Footer = () => {
           <p>Vietnam osu!taiko Community Platform</p>
         </div>
         <div className="footer-links">
-          <a href="https://discord.gg/" target="_blank" rel="noopener noreferrer">Discord <ExternalLink size={12} /></a>
+          <a href="https://discord.gg/teHvDXp7Ef" target="_blank" rel="noopener noreferrer">Discord <ExternalLink size={12} /></a>
           <a href="https://osu.ppy.sh" target="_blank" rel="noopener noreferrer">osu! <ExternalLink size={12} /></a>
         </div>
         <div className="footer-copy">

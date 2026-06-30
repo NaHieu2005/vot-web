@@ -1,0 +1,124 @@
+.bracket-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+.bracket-stage {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 1.5rem;
+}
+
+.bracket-title {
+  margin-bottom: 1.5rem;
+  color: var(--color-accent-primary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.bracket-scroll-container {
+  overflow-x: auto;
+  padding-bottom: 1rem;
+}
+
+.bracket-grid {
+  display: flex;
+  gap: 4rem;
+  min-width: min-content;
+}
+
+.bracket-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-width: 250px;
+}
+
+.bracket-round-header {
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.5rem;
+}
+
+.bracket-nodes-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  justify-content: space-around;
+  flex: 1;
+  position: relative;
+}
+
+/* Removed misaligned lines */
+
+.bracket-node {
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg-tertiary);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+  z-index: 2; /* keep above lines */
+}
+
+.bracket-node-meta {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.bracket-player {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.bracket-player:last-child {
+  border-bottom: none;
+}
+
+.bracket-player.winner {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.bracket-player.winner .bracket-name,
+.bracket-player.winner .bracket-score {
+  color: var(--color-accent-primary);
+  font-weight: 700;
+}
+
+.bracket-name {
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+.bracket-name.tbd {
+  color: var(--color-text-muted);
+  font-style: italic;
+  font-size: 0.8rem;
+}
+
+.bracket-score {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--color-text-muted);
+}

@@ -62,6 +62,7 @@ const Navbar = () => {
     { name: 'Mappool', path: `/tournament/${slug}/mappool` },
     { name: 'Schedule', path: `/tournament/${slug}/schedule` },
     { name: 'Stats', path: `/tournament/${slug}/stats` },
+    { name: 'Players', path: `/tournament/${slug}/players` },
     { name: 'Rules', path: `/tournament/${slug}/rules` },
     { name: 'Staff', path: `/tournament/${slug}/staff` },
   ] : [];
@@ -72,14 +73,11 @@ const Navbar = () => {
     <nav className="navbar">
       <div className="container nav-container">
         <Link to="/" className="nav-logo">
-          <Drum size={24} className="nav-logo-icon" />
-          <span className="nav-logo-text">V<span className="accent">TC</span></span>
+          <img src="/logo.png" alt="VTC" className="nav-logo-icon" style={{ width: '32px', height: '32px', borderRadius: '50%' }} />
+          <span className="nav-logo-text"><span className="accent">VTC</span></span>
         </Link>
 
         <div className="nav-links">
-          {isInTournament && (
-            <Link to="/" className="nav-link nav-back">← Community</Link>
-          )}
           {links.map((link) => (
             <Link
               key={link.path}
